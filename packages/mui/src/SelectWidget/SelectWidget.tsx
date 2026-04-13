@@ -1,57 +1,72 @@
 import { ChangeEvent, FocusEvent } from 'react';
 import MenuItem from '@mui/material/MenuItem';
 import TextField, { TextFieldProps } from '@mui/material/TextField';
+import { InputLabelProps as MuiInputLabelProps } from '@mui/material/InputLabel';
+import { SelectProps as MuiSelectProps } from '@mui/material/Select';
 import {
   ariaDescribedByIds,
   enumOptionsIndexForValue,
   enumOptionsValueForIndex,
   labelValue,
   FormContextType,
+  GenericObjectType,
   RJSFSchema,
   StrictRJSFSchema,
   WidgetProps,
 } from '@rjsf/utils';
+import { getMuiProps } from '../util';
+
+/** Properties available for the `rjsfSlotProps` target of the SelectWidget. */
+export interface SelectWidgetMuiProps extends GenericObjectType {
+  /** RJSF-specific slot props for targeting child elements of the SelectWidget. */
+  rjsfSlotProps?: {
+    /** Props applied to the `InputLabel` element. */
+    inputLabel?: MuiInputLabelProps;
+    /** Props applied to the `Select` element. */
+    select?: MuiSelectProps;
+  };
+}
 
 /** The `SelectWidget` is a widget for rendering dropdowns.
  *  It is typically used with string properties constrained with enum options.
  *
  * @param props - The `WidgetProps` for this component
  */
-export default function SelectWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any,
->({
-  schema,
-  id,
-  name, // remove this from textFieldProps
-  htmlName,
-  options,
-  label,
-  hideLabel,
-  required,
-  disabled,
-  placeholder,
-  readonly,
-  value,
-  multiple,
-  autofocus,
-  onChange,
-  onBlur,
-  onFocus,
-  errorSchema,
-  rawErrors = [],
-  registry,
-  uiSchema,
-  hideError,
-  ...textFieldProps
-}: WidgetProps<T, S, F>) {
+export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends FormContextType = any>(
+  props: WidgetProps<T, S, F>,
+) {
+  const {
+    schema,
+    id,
+    name, // remove this from textFieldProps
+    htmlName,
+    options,
+    label,
+    hideLabel,
+    required,
+    disabled,
+    placeholder,
+    readonly,
+    value,
+    multiple,
+    autofocus,
+    onChange,
+    onBlur,
+    onFocus,
+    errorSchema,
+    rawErrors = [],
+    registry,
+    uiSchema,
+    hideError,
+    ...textFieldProps
+  } = props;
   const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
 
-  multiple = typeof multiple === 'undefined' ? false : !!multiple;
+  const isMultiple = typeof multiple === 'undefined' ? false : !!multiple;
 
-  const emptyValue = multiple ? [] : '';
-  const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
+  const emptyValue = isMultiple ? [] : '';
+  const isEmpty =
+    typeof value === 'undefined' || (isMultiple && value.length < 1) || (!isMultiple && value === emptyValue);
 
   const _onChange = ({ target: { value } }: ChangeEvent<{ value: string }>) =>
     onChange(enumOptionsValueForIndex<S>(value, enumOptions, optEmptyVal));
@@ -59,9 +74,11 @@ export default function SelectWidget<
     onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, optEmptyVal));
   const _onFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
     onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, optEmptyVal));
-  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, multiple);
+  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, isMultiple);
+  const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, SelectWidgetMuiProps>(options);
+
   const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
-  const showPlaceholderOption = !multiple && schema.default === undefined;
+  const showPlaceholderOption = !isMultiple && schema.default === undefined;
 
   return (
     <TextField
@@ -78,15 +95,18 @@ export default function SelectWidget<
       onChange={_onChange}
       onBlur={_onBlur}
       onFocus={_onFocus}
-      {...(textFieldRemainingProps as TextFieldProps)}
+      {...({ ...otherMuiProps, ...textFieldRemainingProps } as TextFieldProps)}
       select // Apply this and the following props after the potential overrides defined in textFieldProps
-      InputLabelProps={{
-        ...InputLabelProps,
-        shrink: !isEmpty,
-      }}
-      SelectProps={{
-        ...SelectProps,
-        multiple,
+      slotProps={{
+        ...muiSlotProps,
+        inputLabel: {
+          ...muiSlotProps?.inputLabel,
+          shrink: !isEmpty,
+        },
+        select: {
+          ...muiSlotProps?.select,
+          multiple,
+        },
       }}
       aria-describedby={ariaDescribedByIds(id)}
     >
