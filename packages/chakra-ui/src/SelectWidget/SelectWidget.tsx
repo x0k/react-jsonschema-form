@@ -3,8 +3,10 @@ import { FocusEvent, useMemo, useRef } from 'react';
 import {
   ariaDescribedByIds,
   EnumOptionsType,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   labelValue,
   FormContextType,
   RJSFSchema,
@@ -42,36 +44,32 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
     uiSchema,
   } = props;
   const { enumOptions, enumDisabled, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const _onMultiChange = ({ value }: SelectValueChangeDetails) => {
-    return onChange(enumOptionsValueForIndex<S>(value, enumOptions, emptyValue));
+    return onChange(enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
   };
 
   const _onSingleChange = ({ value }: SelectValueChangeDetails) => {
-    const selected = enumOptionsValueForIndex<S>(value, enumOptions, emptyValue);
+    const selected = enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue);
     return onChange(Array.isArray(selected) && selected.length === 1 ? selected[0] : selected);
   };
 
   const _onBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
 
   const _onFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
 
   const showPlaceholderOption = !multiple && schema.default === undefined;
-  const { valueLabelMap, displayEnumOptions } = useMemo((): {
-    valueLabelMap: Record<string | number, string>;
-    displayEnumOptions: OptionsOrGroups<any, any>;
-  } => {
-    const valueLabelMap: Record<string | number, string> = {};
+  const displayEnumOptions = useMemo((): OptionsOrGroups<any, any> => {
     let displayEnumOptions: OptionsOrGroups<any, any> = [];
     if (Array.isArray(enumOptions)) {
       displayEnumOptions = enumOptions.map((option: EnumOptionsType<S>, index: number) => {
         const { value, label } = option;
-        valueLabelMap[index] = label || String(value);
         return {
           label,
-          value: String(index),
+          value: enumOptionValueEncoder(value, index, optionValueFormat),
           disabled: Array.isArray(enumDisabled) && enumDisabled.indexOf(value) !== -1,
         };
       });
@@ -79,31 +77,18 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
         (displayEnumOptions as any[]).unshift({ value: '', label: placeholder || '' });
       }
     }
-    return { valueLabelMap: valueLabelMap, displayEnumOptions: displayEnumOptions };
-  }, [enumDisabled, enumOptions, placeholder, showPlaceholderOption]);
+    return displayEnumOptions;
+  }, [enumDisabled, enumOptions, placeholder, showPlaceholderOption, optionValueFormat]);
 
   const isMultiple = typeof multiple !== 'undefined' && multiple !== false && Boolean(enumOptions);
-  const selectedIndex = enumOptionsIndexForValue<S>(value, enumOptions, isMultiple);
 
-  const getMultiValue = () =>
-    ((selectedIndex as string[]) || []).map((i: string) => {
-      return {
-        label: valueLabelMap[i],
-        value: i.toString(),
-      };
-    });
-
-  const getSingleValue = () =>
-    typeof selectedIndex !== 'undefined'
-      ? [
-          {
-            label: valueLabelMap[selectedIndex as string] || '',
-            value: selectedIndex.toString(),
-          },
-        ]
-      : [];
-
-  const formValue = (isMultiple ? getMultiValue() : getSingleValue()).map((item) => item.value);
+  // Chakra's SelectRoot always expects a string array, so flatten the helper's
+  // single/multiple return shape and strip the empty-single case.
+  const formValue = [
+    enumOptionSelectedValue<S>(value, enumOptions, isMultiple, optionValueFormat, isMultiple ? [] : ''),
+  ]
+    .flat()
+    .filter((v) => v !== '') as string[];
 
   const selectOptions = createListCollection({
     items: displayEnumOptions.filter((item) => item.value),

@@ -5,10 +5,11 @@ import FormGroup, { FormGroupProps } from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 import {
   ariaDescribedByIds,
+  enumOptionValueDecoder,
   enumOptionsDeselectValue,
   enumOptionsIsSelected,
   enumOptionsSelectValue,
-  enumOptionsValueForIndex,
+  getOptionValueFormat,
   labelValue,
   optionId,
   FormContextType,
@@ -58,6 +59,7 @@ export default function CheckboxesWidget<
     onFocus,
   } = props;
   const { enumOptions, enumDisabled, inline, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
   const checkboxesValues = Array.isArray(value) ? value : [value];
 
   const _onChange =
@@ -71,9 +73,9 @@ export default function CheckboxesWidget<
     };
 
   const _onBlur = ({ target }: FocusEvent<HTMLButtonElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
   const _onFocus = ({ target }: FocusEvent<HTMLButtonElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
 
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, CheckboxesWidgetMuiProps>(options);
 

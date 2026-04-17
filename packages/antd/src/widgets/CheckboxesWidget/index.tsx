@@ -2,8 +2,10 @@ import { FocusEvent } from 'react';
 import { Checkbox } from 'antd';
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   optionId,
   FormContextType,
   WidgetProps,
@@ -38,14 +40,16 @@ export default function CheckboxesWidget<
   const { readonlyAsDisabled = true } = formContext as GenericObjectType;
 
   const { enumOptions, enumDisabled, inline, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
-  const handleChange = (nextValue: any) => onChange(enumOptionsValueForIndex<S>(nextValue, enumOptions, emptyValue));
+  const handleChange = (nextValue: any) =>
+    onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
 
   const handleBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target.value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target.value, enumOptions, optionValueFormat, emptyValue));
 
   const handleFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target.value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target.value, enumOptions, optionValueFormat, emptyValue));
 
   // Antd's typescript definitions do not contain the following props that are actually necessary and, if provided,
   // they are used, so hacking them in via by spreading `extraProps` on the component to avoid typescript errors
@@ -55,7 +59,7 @@ export default function CheckboxesWidget<
     onFocus: !readonly ? handleFocus : undefined,
   };
 
-  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, true) as string[];
+  const selectValue = enumOptionSelectedValue<S>(value, enumOptions, true, optionValueFormat, []) as string[];
 
   return Array.isArray(enumOptions) && enumOptions.length > 0 ? (
     <>
@@ -63,7 +67,7 @@ export default function CheckboxesWidget<
         disabled={disabled || (readonlyAsDisabled && readonly)}
         name={htmlName || id}
         onChange={!readonly ? handleChange : undefined}
-        value={selectedIndexes}
+        value={selectValue}
         {...extraProps}
         aria-describedby={ariaDescribedByIds(id)}
       >
@@ -75,7 +79,7 @@ export default function CheckboxesWidget<
                 name={htmlName || id}
                 autoFocus={i === 0 ? autofocus : false}
                 disabled={Array.isArray(enumDisabled) && enumDisabled.indexOf(option.value) !== -1}
-                value={String(i)}
+                value={enumOptionValueEncoder(option.value, i, optionValueFormat)}
               >
                 {option.label}
               </Checkbox>

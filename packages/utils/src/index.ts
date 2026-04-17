@@ -8,6 +8,9 @@ import dateRangeOptions from './dateRangeOptions';
 import deepEquals from './deepEquals';
 import shallowEquals from './shallowEquals';
 import englishStringTranslator from './englishStringTranslator';
+import enumOptionSelectedValue from './enumOptionSelectedValue';
+import enumOptionValueDecoder from './enumOptionValueDecoder';
+import enumOptionValueEncoder from './enumOptionValueEncoder';
 import enumOptionsDeselectValue from './enumOptionsDeselectValue';
 import enumOptionsIndexForValue from './enumOptionsIndexForValue';
 import enumOptionsIsSelected from './enumOptionsIsSelected';
@@ -20,6 +23,7 @@ import getDateElementProps, { DateElementFormat, DateElementProp } from './getDa
 import getDiscriminatorFieldFromSchema from './getDiscriminatorFieldFromSchema';
 import getInputProps from './getInputProps';
 import getOptionMatchingSimpleDiscriminator from './getOptionMatchingSimpleDiscriminator';
+import getOptionValueFormat from './getOptionValueFormat';
 import getSchemaType from './getSchemaType';
 import getSubmitButtonOptions from './getSubmitButtonOptions';
 import getTemplate from './getTemplate';
@@ -108,6 +112,9 @@ export {
   deepEquals,
   descriptionId,
   englishStringTranslator,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
   enumOptionsDeselectValue,
   enumOptionsIndexForValue,
   enumOptionsIsSelected,
@@ -122,6 +129,7 @@ export {
   getDiscriminatorFieldFromSchema,
   getInputProps,
   getOptionMatchingSimpleDiscriminator,
+  getOptionValueFormat,
   getSchemaType,
   getSubmitButtonOptions,
   getTemplate,

@@ -1,8 +1,10 @@
 import { FocusEvent, useCallback } from 'react';
 import {
   ariaDescribedByIds,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
   enumOptionsIsSelected,
-  enumOptionsValueForIndex,
+  getOptionValueFormat,
   optionId,
   FormContextType,
   RJSFSchema,
@@ -29,17 +31,18 @@ function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends
   htmlName,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, inline, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const handleBlur = useCallback(
     ({ target }: FocusEvent<HTMLInputElement>) =>
-      onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue)),
-    [onBlur, enumOptions, emptyValue, id],
+      onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue)),
+    [onBlur, enumOptions, emptyValue, id, optionValueFormat],
   );
 
   const handleFocus = useCallback(
     ({ target }: FocusEvent<HTMLInputElement>) =>
-      onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue)),
-    [onFocus, enumOptions, emptyValue, id],
+      onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue)),
+    [onFocus, enumOptions, emptyValue, id, optionValueFormat],
   );
 
   return (
@@ -60,7 +63,7 @@ function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extends
                 checked={checked}
                 name={htmlName || id}
                 required={required}
-                value={String(i)}
+                value={enumOptionValueEncoder(option.value, i, optionValueFormat)}
                 disabled={disabled || itemDisabled || readonly}
                 autoFocus={autofocus && i === 0}
                 onChange={handleChange}

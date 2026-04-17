@@ -1,9 +1,10 @@
 import {
   ariaDescribedByIds,
+  enumOptionValueDecoder,
   enumOptionsDeselectValue,
   enumOptionsIsSelected,
   enumOptionsSelectValue,
-  enumOptionsValueForIndex,
+  getOptionValueFormat,
   FormContextType,
   optionId,
   RJSFSchema,
@@ -40,12 +41,13 @@ export default function CheckboxesWidget<
   className,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, inline, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
   const checkboxesValues = Array.isArray(value) ? value : [value];
 
   const _onBlur = ({ target }: FocusEvent<HTMLButtonElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && (target as any).value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target && (target as any).value, enumOptions, optionValueFormat, emptyValue));
   const _onFocus = ({ target }: FocusEvent<HTMLButtonElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && (target as any).value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target && (target as any).value, enumOptions, optionValueFormat, emptyValue));
 
   return (
     <div className={cn({ 'flex flex-col gap-2': !inline, 'flex flex-row gap-4 flex-wrap': inline })}>

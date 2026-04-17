@@ -1,8 +1,10 @@
 import { FocusEvent, useCallback, useMemo } from 'react';
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   labelValue,
   FormContextType,
   RJSFSchema,
@@ -41,70 +43,76 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
   } = props;
 
   const { enumOptions, enumDisabled, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
   const themeProps = cleanupOptions(options);
 
   const handleChange = useCallback(
     (nextValue: any) => {
       if (!disabled && !readonly && onChange) {
-        onChange(enumOptionsValueForIndex<S>(nextValue, enumOptions, emptyValue));
+        onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onChange, disabled, readonly, enumOptions, emptyValue],
+    [onChange, disabled, readonly, enumOptions, emptyValue, optionValueFormat],
   );
 
   const handleBlur = useCallback(
     ({ target }: FocusEvent<HTMLInputElement>) => {
       if (onBlur) {
-        onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+        onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onBlur, id, enumOptions, emptyValue],
+    [onBlur, id, enumOptions, emptyValue, optionValueFormat],
   );
 
   const handleFocus = useCallback(
     ({ target }: FocusEvent<HTMLInputElement>) => {
       if (onFocus) {
-        onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+        onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onFocus, id, enumOptions, emptyValue],
+    [onFocus, id, enumOptions, emptyValue, optionValueFormat],
   );
-
-  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, multiple);
 
   const selectOptions = useMemo(() => {
     if (Array.isArray(enumOptions)) {
       return enumOptions.map((option, index) => ({
         key: String(index),
-        value: String(index),
+        value: enumOptionValueEncoder(option.value, index, optionValueFormat),
         label: option.label,
         disabled: Array.isArray(enumDisabled) && enumDisabled.indexOf(option.value) !== -1,
       }));
     }
     return [];
-  }, [enumDisabled, enumOptions]);
+  }, [enumDisabled, enumOptions, optionValueFormat]);
 
-  const Component = multiple ? MultiSelect : Select;
+  const sharedProps = {
+    id,
+    name: htmlName || id,
+    label: labelValue(label || undefined, hideLabel, false),
+    data: selectOptions,
+    onChange: !readonly ? handleChange : undefined,
+    onBlur: !readonly ? handleBlur : undefined,
+    onFocus: !readonly ? handleFocus : undefined,
+    autoFocus: autofocus,
+    placeholder,
+    disabled: disabled || readonly,
+    required,
+    error: rawErrors && rawErrors.length > 0 ? rawErrors.join('\n') : undefined,
+    searchable: true,
+    'aria-describedby': ariaDescribedByIds(id),
+    comboboxProps: { withinPortal: false },
+    ...themeProps,
+  };
 
-  return (
-    <Component
-      id={id}
-      name={htmlName || id}
-      label={labelValue(label || undefined, hideLabel, false)}
-      data={selectOptions}
-      value={multiple ? (selectedIndexes as any) : (selectedIndexes as string)}
-      onChange={!readonly ? handleChange : undefined}
-      onBlur={!readonly ? handleBlur : undefined}
-      onFocus={!readonly ? handleFocus : undefined}
-      autoFocus={autofocus}
-      placeholder={placeholder}
-      disabled={disabled || readonly}
-      required={required}
-      error={rawErrors && rawErrors.length > 0 ? rawErrors.join('\n') : undefined}
-      searchable
-      {...themeProps}
-      aria-describedby={ariaDescribedByIds(id)}
-      comboboxProps={{ withinPortal: false }}
+  return multiple ? (
+    <MultiSelect
+      {...sharedProps}
+      value={enumOptionSelectedValue<S>(value, enumOptions, true, optionValueFormat, []) as string[]}
+    />
+  ) : (
+    <Select
+      {...sharedProps}
+      value={enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, null) as string | null}
     />
   );
 }

@@ -28,6 +28,7 @@ should change the heading of the (upcoming) version to include a major version b
 ## @rjsf/chakra-ui
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/core
 
@@ -36,39 +37,48 @@ should change the heading of the (upcoming) version to include a major version b
 - Fixed focus being lost when renaming additional property keys by preserving React key for renamed properties ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
 - Removed `expandUiSchemaDefinitions` call at form init, now handled at runtime by `resolveUiSchema`, fixing [#4986](https://github.com/rjsf-team/react-jsonschema-form/issues/4986)
 - Used `useRef` to track latest `formData` in `handleKeyRename`, preventing stale closure data when multiple additional property keys are renamed in quick succession, fixing [#5021](https://github.com/rjsf-team/react-jsonschema-form/issues/5021)
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` for rendering real enum values in DOM attributes instead of array indices ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/daisyui
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/fluentui-rc
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/mantine
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
 - Updated `BaseInputTemplate` to destructure and guard `min`/`max` before spreading onto `NumberInput`, fixing a build error caused by the widened `InputPropsType` (`number | string`)
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/mui
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/primereact
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/react-bootstrap
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/semantic-ui
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/shadcn
 
 - Added `key={label}` to key input in `WrapIfAdditionalTemplate` to reset input value after duplicate key rename ([#4999](https://github.com/rjsf-team/react-jsonschema-form/issues/4999))
+- Added opt-in `optionValueFormat: 'realValue'` support to `SelectWidget`, `RadioWidget`, and `CheckboxesWidget` ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 ## @rjsf/mui
 
@@ -80,6 +90,8 @@ should change the heading of the (upcoming) version to include a major version b
 - Updated `InputPropsType` to widen `min` and `max` to `number | string` to support date values (e.g. `"2020-01-01"`)
 - Updated `getInputProps()` to propagate `formatMinimum` and `formatMaximum` schema keywords to the HTML `min`/`max` attributes for `date`, `datetime-local`, `time`, `week`, and `month` input types, aligning browser-native date picker constraints with AJV validation
 - Fixed `ui:title` from `ui:definitions` not applied to `oneOf`/`anyOf` dropdowns beyond first recursion level, fixing [#4986](https://github.com/rjsf-team/react-jsonschema-form/issues/4986)
+- Added `enumOptionValueEncoder`, `enumOptionValueDecoder`, and `enumOptionSelectedValue` utilities for opt-in real enum value rendering in select/radio/checkbox widgets ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
+- Added `optionValueFormat: 'indexed' | 'realValue'` to `GlobalUISchemaOptions` and the `OptionValueFormat` type for opt-in real enum values in widget DOM attributes ([#4693](https://github.com/rjsf-team/react-jsonschema-form/issues/4693))
 
 # @rjsf/validator-ajv8
 

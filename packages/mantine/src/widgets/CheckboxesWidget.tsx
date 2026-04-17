@@ -1,8 +1,10 @@
 import { FocusEvent, useCallback } from 'react';
 import {
   ariaDescribedByIds,
-  enumOptionsValueForIndex,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
   enumOptionsIndexForValue,
+  getOptionValueFormat,
   optionId,
   titleId,
   FormContextType,
@@ -42,33 +44,34 @@ export default function CheckboxesWidget<
   } = props;
 
   const { enumOptions, enumDisabled, inline, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
   const themeProps = cleanupOptions(options);
 
   const handleChange = useCallback(
     (nextValue: any) => {
       if (!disabled && !readonly && onChange) {
-        onChange(enumOptionsValueForIndex<S>(nextValue, enumOptions, emptyValue));
+        onChange(enumOptionValueDecoder<S>(nextValue, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onChange, disabled, readonly, enumOptions, emptyValue],
+    [onChange, disabled, readonly, enumOptions, emptyValue, optionValueFormat],
   );
 
   const handleBlur = useCallback(
     ({ target }: FocusEvent<HTMLInputElement>) => {
       if (onBlur) {
-        onBlur(id, enumOptionsValueForIndex<S>(target.value, enumOptions, emptyValue));
+        onBlur(id, enumOptionValueDecoder<S>(target.value, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onBlur, id, enumOptions, emptyValue],
+    [onBlur, id, enumOptions, emptyValue, optionValueFormat],
   );
 
   const handleFocus = useCallback(
     ({ target }: FocusEvent<HTMLInputElement>) => {
       if (onFocus) {
-        onFocus(id, enumOptionsValueForIndex<S>(target.value, enumOptions, emptyValue));
+        onFocus(id, enumOptionValueDecoder<S>(target.value, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onFocus, id, enumOptions, emptyValue],
+    [onFocus, id, enumOptions, emptyValue, optionValueFormat],
   );
 
   const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, true) as string[];
@@ -97,7 +100,7 @@ export default function CheckboxesWidget<
                 key={i}
                 id={optionId(id, i)}
                 name={htmlName || id}
-                value={String(i)}
+                value={enumOptionValueEncoder(option.value, i, optionValueFormat)}
                 label={option.label}
                 disabled={Array.isArray(enumDisabled) && enumDisabled.indexOf(option.value) !== -1}
                 autoFocus={i === 0 && autofocus}

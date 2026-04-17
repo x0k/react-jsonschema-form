@@ -1,7 +1,9 @@
 import { FocusEvent, useCallback } from 'react';
 import {
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   FormContextType,
   RJSFSchema,
   StrictRJSFSchema,
@@ -39,6 +41,7 @@ export default function SelectWidget<
   onFocus,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, emptyValue: optEmptyVal } = options;
+  const optionValueFormat = getOptionValueFormat(options);
   multiple = typeof multiple === 'undefined' ? false : !!multiple;
 
   const getDisplayValue = (val: any) => {
@@ -67,7 +70,7 @@ export default function SelectWidget<
         const currentValue = Array.isArray(value) ? value : [];
         const optionValue = isEnumeratedObject
           ? enumOptions[index].value
-          : enumOptionsValueForIndex<S>(String(index), enumOptions, optEmptyVal);
+          : enumOptionValueDecoder<S>(String(index), enumOptions, optionValueFormat, optEmptyVal);
         const newValue = currentValue.includes(optionValue)
           ? currentValue.filter((v) => v !== optionValue)
           : [...currentValue, optionValue];
@@ -76,35 +79,41 @@ export default function SelectWidget<
         onChange(
           isEnumeratedObject
             ? enumOptions[index].value
-            : enumOptionsValueForIndex<S>(String(index), enumOptions, optEmptyVal),
+            : enumOptionValueDecoder<S>(String(index), enumOptions, optionValueFormat, optEmptyVal),
         );
       }
     },
-    [value, multiple, isEnumeratedObject, enumOptions, optEmptyVal, onChange],
+    [value, multiple, isEnumeratedObject, enumOptions, optEmptyVal, optionValueFormat, onChange],
   );
 
   const _onBlur = useCallback(
     ({ target }: FocusEvent<HTMLDivElement>) => {
       const dataValue = target?.getAttribute('data-value');
       if (dataValue !== null) {
-        onBlur(id, enumOptionsValueForIndex<S>(dataValue, enumOptions, optEmptyVal));
+        onBlur(id, enumOptionValueDecoder<S>(dataValue, enumOptions, optionValueFormat, optEmptyVal));
       }
     },
-    [onBlur, id, enumOptions, optEmptyVal],
+    [onBlur, id, enumOptions, optEmptyVal, optionValueFormat],
   );
 
   const _onFocus = useCallback(
     ({ target }: FocusEvent<HTMLDivElement>) => {
       const dataValue = target?.getAttribute('data-value');
       if (dataValue !== null) {
-        onFocus(id, enumOptionsValueForIndex<S>(dataValue, enumOptions, optEmptyVal));
+        onFocus(id, enumOptionValueDecoder<S>(dataValue, enumOptions, optionValueFormat, optEmptyVal));
       }
     },
-    [onFocus, id, enumOptions, optEmptyVal],
+    [onFocus, id, enumOptions, optEmptyVal, optionValueFormat],
   );
 
-  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, multiple);
-  const selectedValues = Array.isArray(selectedIndexes) ? selectedIndexes : [selectedIndexes];
+  // The custom dropdown iterates `selectedValues.includes(...)` per option, so
+  // it always needs a string array regardless of `multiple`. Flatten the
+  // helper's single/multiple return shape and strip the empty-single case.
+  const selectedValues: string[] = [
+    enumOptionSelectedValue<S>(value, enumOptions, !!multiple, optionValueFormat, multiple ? [] : ''),
+  ]
+    .flat()
+    .filter((v) => v !== '');
 
   const optionsList =
     enumOptions ||
@@ -130,30 +139,33 @@ export default function SelectWidget<
           <span className='ml-2'>▼</span>
         </div>
         <ul className='dropdown-content z-[1] bg-base-100 w-full max-h-60 overflow-auto rounded-box shadow-lg'>
-          {optionsList.map(({ label }, i) => (
-            <li
-              key={i}
-              role='button'
-              tabIndex={0}
-              className={`px-4 py-2 hover:bg-base-200 cursor-pointer ${
-                selectedValues.includes(String(i)) ? 'bg-primary/10' : ''
-              }`}
-              onClick={handleOptionClick}
-              data-value={i}
-            >
-              <div className='flex items-center gap-2'>
-                {multiple && (
-                  <input
-                    type='checkbox'
-                    className='checkbox checkbox-sm'
-                    checked={selectedValues.includes(String(i))}
-                    readOnly
-                  />
-                )}
-                <span>{isEnumeratedObject ? label : getDisplayValue(label)}</span>
-              </div>
-            </li>
-          ))}
+          {optionsList.map(({ value: optValue, label }, i) => {
+            const encodedValue = enumOptionValueEncoder(optValue, i, optionValueFormat);
+            return (
+              <li
+                key={i}
+                role='button'
+                tabIndex={0}
+                className={`px-4 py-2 hover:bg-base-200 cursor-pointer ${
+                  selectedValues.includes(encodedValue) ? 'bg-primary/10' : ''
+                }`}
+                onClick={handleOptionClick}
+                data-value={i}
+              >
+                <div className='flex items-center gap-2'>
+                  {multiple && (
+                    <input
+                      type='checkbox'
+                      className='checkbox checkbox-sm'
+                      checked={selectedValues.includes(encodedValue)}
+                      readOnly
+                    />
+                  )}
+                  <span>{isEnumeratedObject ? label : getDisplayValue(label)}</span>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

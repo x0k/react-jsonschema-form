@@ -1,7 +1,9 @@
 import {
   ariaDescribedByIds,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
   enumOptionsIsSelected,
-  enumOptionsValueForIndex,
+  getOptionValueFormat,
   FormContextType,
   optionId,
   RJSFSchema,
@@ -32,12 +34,14 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
   className,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
-  const _onChange = (value: string) => onChange(enumOptionsValueForIndex<S>(value, enumOptions, emptyValue));
+  const _onChange = (value: string) =>
+    onChange(enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
   const _onBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
   const _onFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
 
   const inline = Boolean(options && options.inline);
 
@@ -64,7 +68,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
               <div className='flex items-center gap-2' key={optionId(id, index)}>
                 <RadioGroupItem
                   checked={checked}
-                  value={index.toString()}
+                  value={enumOptionValueEncoder(option.value, index, optionValueFormat)}
                   id={optionId(id, index)}
                   disabled={itemDisabled}
                 />

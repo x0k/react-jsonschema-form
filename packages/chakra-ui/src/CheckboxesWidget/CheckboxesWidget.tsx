@@ -1,8 +1,10 @@
 import { CheckboxGroup, FieldsetRoot, Stack, Text, FieldsetLegend } from '@chakra-ui/react';
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   FormContextType,
   optionId,
   RJSFSchema,
@@ -37,14 +39,15 @@ export default function CheckboxesWidget<
     uiSchema,
   } = props;
   const { enumOptions, enumDisabled, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const _onBlur = ({ target }: FocusEvent<HTMLInputElement | any>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
   const _onFocus = ({ target }: FocusEvent<HTMLInputElement | any>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
 
   const row = options ? options.inline : false;
-  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, true) as string[];
+  const selectValue = enumOptionSelectedValue<S>(value, enumOptions, true, optionValueFormat, []) as string[];
 
   const chakraProps = getChakra({ uiSchema });
 
@@ -57,8 +60,10 @@ export default function CheckboxesWidget<
     >
       {!hideLabel && label && <FieldsetLegend>{labelValue(label)}</FieldsetLegend>}
       <CheckboxGroup
-        onValueChange={(option) => onChange(enumOptionsValueForIndex<S>(option, enumOptions, emptyValue))}
-        value={selectedIndexes}
+        onValueChange={(option) =>
+          onChange(enumOptionValueDecoder<S>(option, enumOptions, optionValueFormat, emptyValue))
+        }
+        value={selectValue}
         aria-describedby={ariaDescribedByIds(id)}
         readOnly={readonly}
         invalid={required && value.length === 0}
@@ -72,7 +77,7 @@ export default function CheckboxesWidget<
                   key={index}
                   id={optionId(id, index)}
                   name={htmlName || id}
-                  value={String(index)}
+                  value={enumOptionValueEncoder(option.value, index, optionValueFormat)}
                   disabled={disabled || itemDisabled || readonly}
                   onBlur={_onBlur}
                   onFocus={_onFocus}

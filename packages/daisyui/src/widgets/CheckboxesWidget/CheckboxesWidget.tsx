@@ -1,5 +1,13 @@
 import { FocusEvent, useCallback } from 'react';
-import { WidgetProps, StrictRJSFSchema, RJSFSchema, FormContextType } from '@rjsf/utils';
+import {
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
+  WidgetProps,
+  StrictRJSFSchema,
+  RJSFSchema,
+  FormContextType,
+} from '@rjsf/utils';
 
 /** The `CheckboxesWidget` component renders a set of checkboxes for multiple choice selection
  * with DaisyUI styling.
@@ -27,7 +35,8 @@ export default function CheckboxesWidget<T, S extends StrictRJSFSchema = RJSFSch
   onFocus,
   onBlur,
 }: WidgetProps<T, S, F>) {
-  const { enumOptions } = options;
+  const { enumOptions, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
   const isEnumeratedObject = enumOptions && enumOptions[0]?.value && typeof enumOptions[0].value === 'object';
 
   /** Determines if a checkbox option should be checked based on the current value
@@ -73,28 +82,20 @@ export default function CheckboxesWidget<T, S extends StrictRJSFSchema = RJSFSch
   const handleFocus = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
       if (onFocus) {
-        const index = Number(event.target.dataset.index);
-        const option = enumOptions?.[index];
-        if (option) {
-          onFocus(id, option.value);
-        }
+        onFocus(id, enumOptionValueDecoder<S>(event.target.value, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onFocus, id, enumOptions],
+    [onFocus, id, enumOptions, optionValueFormat, emptyValue],
   );
 
   /** Handles blur events for accessibility */
   const handleBlur = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
       if (onBlur) {
-        const index = Number(event.target.dataset.index);
-        const option = enumOptions?.[index];
-        if (option) {
-          onBlur(id, option.value);
-        }
+        onBlur(id, enumOptionValueDecoder<S>(event.target.value, enumOptions, optionValueFormat, emptyValue));
       }
     },
-    [onBlur, id, enumOptions],
+    [onBlur, id, enumOptions, optionValueFormat, emptyValue],
   );
 
   return (
@@ -108,6 +109,7 @@ export default function CheckboxesWidget<T, S extends StrictRJSFSchema = RJSFSch
               id={`${id}-${option.value}`}
               className='checkbox'
               name={htmlName || id}
+              value={enumOptionValueEncoder(option.value, index, optionValueFormat)}
               checked={isChecked(option)}
               required={required}
               disabled={disabled || readonly}

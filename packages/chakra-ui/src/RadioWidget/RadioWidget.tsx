@@ -2,8 +2,10 @@ import { ChangeEvent, FocusEvent } from 'react';
 import { Stack } from '@chakra-ui/react';
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   labelValue,
   optionId,
   FormContextType,
@@ -32,16 +34,17 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
   uiSchema,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const _onChange = ({ target: { value } }: ChangeEvent<HTMLInputElement>) =>
-    onChange(enumOptionsValueForIndex<S>(value, enumOptions, emptyValue));
+    onChange(enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
   const _onBlur = ({ target: { value } }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
   const _onFocus = ({ target: { value } }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
 
   const row = options ? options.inline : false;
-  const selectedIndex = (enumOptionsIndexForValue<S>(value, enumOptions) as string) ?? null;
+  const selectValue = enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, null);
 
   const chakraProps = getChakra({ uiSchema });
 
@@ -58,7 +61,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
         onChange={_onChange}
         onBlur={_onBlur}
         onFocus={_onFocus}
-        value={selectedIndex}
+        value={selectValue}
         name={htmlName || id}
         aria-describedby={ariaDescribedByIds(id)}
       >
@@ -69,7 +72,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
 
               return (
                 <Radio
-                  value={String(index)}
+                  value={enumOptionValueEncoder(option.value, index, optionValueFormat)}
                   key={index}
                   id={optionId(id, index)}
                   disabled={disabled || itemDisabled || readonly}

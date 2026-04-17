@@ -5,8 +5,10 @@ import Radio, { RadioProps } from '@mui/material/Radio';
 import RadioGroup, { RadioGroupProps } from '@mui/material/RadioGroup';
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   labelValue,
   optionId,
   FormContextType,
@@ -41,15 +43,17 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
   const { id, htmlName, options, value, required, disabled, readonly, label, hideLabel, onChange, onBlur, onFocus } =
     props;
   const { enumOptions, enumDisabled, emptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
-  const _onChange = (_: any, value: any) => onChange(enumOptionsValueForIndex<S>(value, enumOptions, emptyValue));
+  const _onChange = (_: any, value: any) =>
+    onChange(enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, emptyValue));
   const _onBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
   const _onFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, emptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, emptyValue));
 
   const row = options ? options.inline : false;
-  const selectedIndex = enumOptionsIndexForValue<S>(value, enumOptions) ?? null;
+  const selectValue = enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, '');
 
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, RadioWidgetMuiProps>(options);
 
@@ -66,7 +70,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
         {...muiSlotProps?.radioGroup}
         id={id}
         name={htmlName || id}
-        value={selectedIndex}
+        value={selectValue}
         row={row as boolean}
         onChange={_onChange}
         onBlur={_onBlur}
@@ -83,7 +87,7 @@ export default function RadioWidget<T = any, S extends StrictRJSFSchema = RJSFSc
                   <Radio {...muiSlotProps?.radio} name={htmlName || id} id={optionId(id, index)} color='primary' />
                 }
                 label={option.label}
-                value={String(index)}
+                value={enumOptionValueEncoder(option.value, index, optionValueFormat)}
                 key={index}
                 disabled={disabled || itemDisabled || readonly}
               />

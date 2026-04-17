@@ -5,8 +5,10 @@ import { InputLabelProps as MuiInputLabelProps } from '@mui/material/InputLabel'
 import { SelectProps as MuiSelectProps } from '@mui/material/Select';
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   labelValue,
   FormContextType,
   GenericObjectType,
@@ -61,6 +63,7 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
     ...textFieldProps
   } = props;
   const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const isMultiple = typeof multiple === 'undefined' ? false : !!multiple;
 
@@ -69,12 +72,11 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
     typeof value === 'undefined' || (isMultiple && value.length < 1) || (!isMultiple && value === emptyValue);
 
   const _onChange = ({ target: { value } }: ChangeEvent<{ value: string }>) =>
-    onChange(enumOptionsValueForIndex<S>(value, enumOptions, optEmptyVal));
+    onChange(enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, optEmptyVal));
   const _onBlur = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onBlur(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, optEmptyVal));
+    onBlur(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, optEmptyVal));
   const _onFocus = ({ target }: FocusEvent<HTMLInputElement>) =>
-    onFocus(id, enumOptionsValueForIndex<S>(target && target.value, enumOptions, optEmptyVal));
-  const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, isMultiple);
+    onFocus(id, enumOptionValueDecoder<S>(target && target.value, enumOptions, optionValueFormat, optEmptyVal));
   const { rjsfSlotProps: muiSlotProps, ...otherMuiProps } = getMuiProps<T, S, F, SelectWidgetMuiProps>(options);
 
   const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
@@ -85,7 +87,7 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
       id={id}
       name={htmlName || id}
       label={labelValue(label || undefined, hideLabel, undefined)}
-      value={!isEmpty && typeof selectedIndexes !== 'undefined' ? selectedIndexes : emptyValue}
+      value={enumOptionSelectedValue<S>(value, enumOptions, isMultiple, optionValueFormat, emptyValue)}
       required={required}
       disabled={disabled || readonly}
       autoFocus={autofocus}
@@ -115,7 +117,7 @@ export default function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFS
         enumOptions.map(({ value, label }, i: number) => {
           const disabled: boolean = Array.isArray(enumDisabled) && enumDisabled.indexOf(value) !== -1;
           return (
-            <MenuItem key={i} value={String(i)} disabled={disabled}>
+            <MenuItem key={i} value={enumOptionValueEncoder(value, i, optionValueFormat)} disabled={disabled}>
               {label}
             </MenuItem>
           );

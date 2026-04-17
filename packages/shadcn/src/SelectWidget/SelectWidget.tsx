@@ -1,7 +1,9 @@
 import {
   ariaDescribedByIds,
-  enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  enumOptionSelectedValue,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
+  getOptionValueFormat,
   FormContextType,
   RJSFSchema,
   StrictRJSFSchema,
@@ -33,23 +35,23 @@ export default function SelectWidget<
   onChange,
   onBlur,
   onFocus,
-  defaultValue,
   placeholder,
   rawErrors = [],
   className,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, emptyValue: optEmptyValue } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const _onFancyFocus = () => {
-    onFocus(id, enumOptionsValueForIndex<S>(value, enumOptions, optEmptyValue));
+    onFocus(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, optEmptyValue));
   };
 
   const _onFancyBlur = () => {
-    onBlur(id, enumOptionsValueForIndex<S>(value, enumOptions, optEmptyValue));
+    onBlur(id, enumOptionValueDecoder<S>(value, enumOptions, optionValueFormat, optEmptyValue));
   };
 
   const items = (enumOptions as any)?.map(({ value, label }: any, index: number) => ({
-    value: multiple ? value : index.toString(),
+    value: multiple ? value : enumOptionValueEncoder(value, index, optionValueFormat),
     label: label,
     index,
     disabled: Array.isArray(enumDisabled) && enumDisabled.includes(value),
@@ -62,9 +64,9 @@ export default function SelectWidget<
       {!multiple ? (
         <FancySelect
           items={items}
-          selected={enumOptionsIndexForValue<S>(value ?? defaultValue, enumOptions, false) as unknown as string}
+          selected={enumOptionSelectedValue<S>(value, enumOptions, false, optionValueFormat, '') as string}
           onValueChange={(selectedValue) => {
-            onChange(enumOptionsValueForIndex<S>(selectedValue, enumOptions, optEmptyValue));
+            onChange(enumOptionValueDecoder<S>(selectedValue, enumOptions, optionValueFormat, optEmptyValue));
           }}
           autoFocus={autofocus}
           disabled={disabled || readonly}
@@ -85,7 +87,7 @@ export default function SelectWidget<
           items={items}
           selected={value}
           onValueChange={(values) => {
-            onChange(enumOptionsValueForIndex<S>(values, enumOptions, optEmptyValue));
+            onChange(enumOptionValueDecoder<S>(values.map(String), enumOptions, optionValueFormat, optEmptyValue));
           }}
           onFocus={_onFancyFocus}
           onBlur={_onFancyBlur}

@@ -1,7 +1,9 @@
 import {
   ariaDescribedByIds,
+  enumOptionValueDecoder,
+  enumOptionValueEncoder,
   enumOptionsIndexForValue,
-  enumOptionsValueForIndex,
+  getOptionValueFormat,
   FormContextType,
   labelValue,
   RJSFSchema,
@@ -43,6 +45,7 @@ function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
   placeholder,
 }: WidgetProps<T, S, F>) {
   const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
+  const optionValueFormat = getOptionValueFormat(options);
 
   const selectedIndexes = enumOptionsIndexForValue<S>(value, enumOptions, multiple);
   let selectedIndexesAsArray: string[] = [];
@@ -61,7 +64,7 @@ function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
   const _onFocus = () => onFocus(id, selectedIndexes);
   const _onChange = (_: any, data: OptionOnSelectData) => {
     const newValue = getValue(data, multiple);
-    return onChange(enumOptionsValueForIndex<S>(newValue, enumOptions, optEmptyVal));
+    return onChange(enumOptionValueDecoder<S>(newValue, enumOptions, optionValueFormat, optEmptyVal));
   };
   const showPlaceholderOption = !multiple && schema.default === undefined;
 
@@ -90,7 +93,7 @@ function SelectWidget<T = any, S extends StrictRJSFSchema = RJSFSchema, F extend
           enumOptions.map(({ value, label }, i) => {
             const disabled = enumDisabled && enumDisabled.indexOf(value) !== -1;
             return (
-              <Option key={i} value={String(i)} disabled={disabled}>
+              <Option key={i} value={enumOptionValueEncoder(value, i, optionValueFormat)} disabled={disabled}>
                 {label}
               </Option>
             );
